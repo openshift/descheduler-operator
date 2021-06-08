@@ -8,6 +8,8 @@
 // bindata/v4.1.0/kube-descheduler/servicemonitor.yaml
 // bindata/v4.1.0/profiles/AffinityAndTaints.yaml
 // bindata/v4.1.0/profiles/DevPreviewLongLifecycle.yaml
+// bindata/v4.1.0/profiles/DoNotEvictPodsWithPVC.yaml
+// bindata/v4.1.0/profiles/EvictPodsWithLocalStorage.yaml
 // bindata/v4.1.0/profiles/LifecycleAndUtilization.yaml
 // bindata/v4.1.0/profiles/TopologyAndDuplicates.yaml
 package v410_00_assets
@@ -377,6 +379,44 @@ func v410ProfilesDevpreviewlonglifecycleYaml() (*asset, error) {
 	return a, nil
 }
 
+var _v410ProfilesDonotevictpodswithpvcYaml = []byte(`apiVersion: "descheduler/v1alpha1"
+kind: "DeschedulerPolicy"
+ignorePvcPods: true`)
+
+func v410ProfilesDonotevictpodswithpvcYamlBytes() ([]byte, error) {
+	return _v410ProfilesDonotevictpodswithpvcYaml, nil
+}
+
+func v410ProfilesDonotevictpodswithpvcYaml() (*asset, error) {
+	bytes, err := v410ProfilesDonotevictpodswithpvcYamlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "v4.1.0/profiles/DoNotEvictPodsWithPVC.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _v410ProfilesEvictpodswithlocalstorageYaml = []byte(`apiVersion: "descheduler/v1alpha1"
+kind: "DeschedulerPolicy"
+evictLocalStoragePods: true`)
+
+func v410ProfilesEvictpodswithlocalstorageYamlBytes() ([]byte, error) {
+	return _v410ProfilesEvictpodswithlocalstorageYaml, nil
+}
+
+func v410ProfilesEvictpodswithlocalstorageYaml() (*asset, error) {
+	bytes, err := v410ProfilesEvictpodswithlocalstorageYamlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "v4.1.0/profiles/EvictPodsWithLocalStorage.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 var _v410ProfilesLifecycleandutilizationYaml = []byte(`apiVersion: "descheduler/v1alpha1"
 kind: "DeschedulerPolicy"
 strategies:
@@ -496,16 +536,18 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"v4.1.0/kube-descheduler/configmap.yaml":       v410KubeDeschedulerConfigmapYaml,
-	"v4.1.0/kube-descheduler/deployment.yaml":      v410KubeDeschedulerDeploymentYaml,
-	"v4.1.0/kube-descheduler/role.yaml":            v410KubeDeschedulerRoleYaml,
-	"v4.1.0/kube-descheduler/rolebinding.yaml":     v410KubeDeschedulerRolebindingYaml,
-	"v4.1.0/kube-descheduler/service.yaml":         v410KubeDeschedulerServiceYaml,
-	"v4.1.0/kube-descheduler/servicemonitor.yaml":  v410KubeDeschedulerServicemonitorYaml,
-	"v4.1.0/profiles/AffinityAndTaints.yaml":       v410ProfilesAffinityandtaintsYaml,
-	"v4.1.0/profiles/DevPreviewLongLifecycle.yaml": v410ProfilesDevpreviewlonglifecycleYaml,
-	"v4.1.0/profiles/LifecycleAndUtilization.yaml": v410ProfilesLifecycleandutilizationYaml,
-	"v4.1.0/profiles/TopologyAndDuplicates.yaml":   v410ProfilesTopologyandduplicatesYaml,
+	"v4.1.0/kube-descheduler/configmap.yaml":         v410KubeDeschedulerConfigmapYaml,
+	"v4.1.0/kube-descheduler/deployment.yaml":        v410KubeDeschedulerDeploymentYaml,
+	"v4.1.0/kube-descheduler/role.yaml":              v410KubeDeschedulerRoleYaml,
+	"v4.1.0/kube-descheduler/rolebinding.yaml":       v410KubeDeschedulerRolebindingYaml,
+	"v4.1.0/kube-descheduler/service.yaml":           v410KubeDeschedulerServiceYaml,
+	"v4.1.0/kube-descheduler/servicemonitor.yaml":    v410KubeDeschedulerServicemonitorYaml,
+	"v4.1.0/profiles/AffinityAndTaints.yaml":         v410ProfilesAffinityandtaintsYaml,
+	"v4.1.0/profiles/DevPreviewLongLifecycle.yaml":   v410ProfilesDevpreviewlonglifecycleYaml,
+	"v4.1.0/profiles/DoNotEvictPodsWithPVC.yaml":     v410ProfilesDonotevictpodswithpvcYaml,
+	"v4.1.0/profiles/EvictPodsWithLocalStorage.yaml": v410ProfilesEvictpodswithlocalstorageYaml,
+	"v4.1.0/profiles/LifecycleAndUtilization.yaml":   v410ProfilesLifecycleandutilizationYaml,
+	"v4.1.0/profiles/TopologyAndDuplicates.yaml":     v410ProfilesTopologyandduplicatesYaml,
 }
 
 // AssetDir returns the file names below a certain
@@ -559,10 +601,12 @@ var _bintree = &bintree{nil, map[string]*bintree{
 			"servicemonitor.yaml": {v410KubeDeschedulerServicemonitorYaml, map[string]*bintree{}},
 		}},
 		"profiles": {nil, map[string]*bintree{
-			"AffinityAndTaints.yaml":       {v410ProfilesAffinityandtaintsYaml, map[string]*bintree{}},
-			"DevPreviewLongLifecycle.yaml": {v410ProfilesDevpreviewlonglifecycleYaml, map[string]*bintree{}},
-			"LifecycleAndUtilization.yaml": {v410ProfilesLifecycleandutilizationYaml, map[string]*bintree{}},
-			"TopologyAndDuplicates.yaml":   {v410ProfilesTopologyandduplicatesYaml, map[string]*bintree{}},
+			"AffinityAndTaints.yaml":         {v410ProfilesAffinityandtaintsYaml, map[string]*bintree{}},
+			"DevPreviewLongLifecycle.yaml":   {v410ProfilesDevpreviewlonglifecycleYaml, map[string]*bintree{}},
+			"DoNotEvictPodsWithPVC.yaml":     {v410ProfilesDonotevictpodswithpvcYaml, map[string]*bintree{}},
+			"EvictPodsWithLocalStorage.yaml": {v410ProfilesEvictpodswithlocalstorageYaml, map[string]*bintree{}},
+			"LifecycleAndUtilization.yaml":   {v410ProfilesLifecycleandutilizationYaml, map[string]*bintree{}},
+			"TopologyAndDuplicates.yaml":     {v410ProfilesTopologyandduplicatesYaml, map[string]*bintree{}},
 		}},
 	}},
 }}

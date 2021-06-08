@@ -69,6 +69,8 @@ spec:
                   - TopologyAndDuplicates
                   - LifecycleAndUtilization
                   - DevPreviewLongLifecycle
+                  - EvictPodsWithLocalStorage
+                  - DoNotEvictPodsWithPVC
                   type: string
                 type: array
               unsupportedConfigOverrides:
