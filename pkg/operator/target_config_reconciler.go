@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	configlistersv1 "github.com/openshift/client-go/config/listers/config/v1"
 	"reflect"
 	"strconv"
 	"strings"
@@ -12,6 +13,8 @@ import (
 	"github.com/imdario/mergo"
 
 	operatorv1 "github.com/openshift/api/operator/v1"
+	configv1 "github.com/openshift/api/config/v1"
+	configinformers "github.com/openshift/client-go/config/informers/externalversions"
 	deschedulerv1 "github.com/openshift/cluster-kube-descheduler-operator/pkg/apis/descheduler/v1"
 	operatorconfigclientv1 "github.com/openshift/cluster-kube-descheduler-operator/pkg/generated/clientset/versioned/typed/descheduler/v1"
 	operatorclientinformers "github.com/openshift/cluster-kube-descheduler-operator/pkg/generated/informers/externalversions/descheduler/v1"
@@ -46,15 +49,16 @@ const DefaultImage = "quay.io/openshift/origin-descheduler:latest"
 var DeschedulerCommand = []string{"/bin/descheduler", "--policy-config-file", "/policy-dir/policy.yaml", "--v", "2"}
 
 type TargetConfigReconciler struct {
-	ctx                 context.Context
-	targetImagePullSpec string
-	operatorClient      operatorconfigclientv1.KubedeschedulersV1Interface
-	deschedulerClient   *operatorclient.DeschedulerClient
-	kubeClient          kubernetes.Interface
-	dynamicClient       dynamic.Interface
-	eventRecorder       events.Recorder
-	queue               workqueue.RateLimitingInterface
-	excludedNamespaces  []string
+	ctx                   context.Context
+	targetImagePullSpec   string
+	operatorClient        operatorconfigclientv1.KubedeschedulersV1Interface
+	deschedulerClient     *operatorclient.DeschedulerClient
+	kubeClient            kubernetes.Interface
+	dynamicClient         dynamic.Interface
+	eventRecorder         events.Recorder
+	queue                 workqueue.RateLimitingInterface
+	excludedNamespaces    []string
+	configSchedulerLister configlistersv1.SchedulerLister
 }
 
 func NewTargetConfigReconciler(
@@ -65,6 +69,7 @@ func NewTargetConfigReconciler(
 	deschedulerClient *operatorclient.DeschedulerClient,
 	kubeClient kubernetes.Interface,
 	dynamicClient dynamic.Interface,
+	configInformer configinformers.SharedInformerFactory,
 	eventRecorder events.Recorder,
 ) *TargetConfigReconciler {
 	// make sure our list of excluded system namespaces is up to date
@@ -81,15 +86,16 @@ func NewTargetConfigReconciler(
 	}
 
 	c := &TargetConfigReconciler{
-		ctx:                 ctx,
-		operatorClient:      operatorConfigClient,
-		deschedulerClient:   deschedulerClient,
-		kubeClient:          kubeClient,
-		dynamicClient:       dynamicClient,
-		eventRecorder:       eventRecorder,
-		queue:               workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "TargetConfigReconciler"),
-		excludedNamespaces:  excludedNamespaces,
-		targetImagePullSpec: targetImagePullSpec,
+		ctx:                   ctx,
+		operatorClient:        operatorConfigClient,
+		deschedulerClient:     deschedulerClient,
+		kubeClient:            kubeClient,
+		dynamicClient:         dynamicClient,
+		eventRecorder:         eventRecorder,
+		queue:                 workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "TargetConfigReconciler"),
+		excludedNamespaces:    excludedNamespaces,
+		targetImagePullSpec:   targetImagePullSpec,
+		configSchedulerLister: configInformer.Config().V1().Schedulers().Lister(),
 	}
 	operatorClientInformer.Informer().AddEventHandler(c.eventHandler())
 
@@ -203,6 +209,11 @@ func (c *TargetConfigReconciler) manageConfigMap(descheduler *deschedulerv1.Kube
 		},
 	}
 
+	scheduler, err := c.configSchedulerLister.Get("cluster")
+	if err != nil {
+		return nil, false, err
+	}
+
 	// parse whatever profiles are set into their policy representations then merge them into one file
 	if len(descheduler.Spec.Profiles) == 0 {
 		return nil, false, fmt.Errorf("descheduler should have at least 1 profile enabled")
@@ -216,7 +227,7 @@ func (c *TargetConfigReconciler) manageConfigMap(descheduler *deschedulerv1.Kube
 			return nil, false, err
 		}
 
-		if err := checkProfileConflicts(profiles, profileName); err != nil {
+		if err := checkProfileConflicts(profiles, profileName, scheduler); err != nil {
 			klog.ErrorS(err, "Profile conflict")
 			continue
 		}
@@ -250,7 +261,7 @@ func (c *TargetConfigReconciler) manageConfigMap(descheduler *deschedulerv1.Kube
 
 // checkProfileConflicts ensures that multiple profiles aren't redeclared
 // it also checks for various inter-profile conflicts (profiles which should not be enabled simultaneously)
-func checkProfileConflicts(profiles sets.String, profileName deschedulerv1.DeschedulerProfile) error {
+func checkProfileConflicts(profiles sets.String, profileName deschedulerv1.DeschedulerProfile, scheduler *configv1.Scheduler) error {
 	if profiles.Has(string(profileName)) {
 		return fmt.Errorf("profile %s already declared, ignoring", profileName)
 	} else {
@@ -259,6 +270,10 @@ func checkProfileConflicts(profiles sets.String, profileName deschedulerv1.Desch
 
 	if profiles.Has(string(deschedulerv1.DevPreviewLongLifecycle)) && profiles.Has(string(deschedulerv1.LifecycleAndUtilization)) {
 		return fmt.Errorf("cannot declare %s and %s profiles simultaneously, ignoring", deschedulerv1.DevPreviewLongLifecycle, deschedulerv1.LifecycleAndUtilization)
+	}
+
+	if scheduler.Spec.Profile == configv1.LowNodeUtilization && profiles.Has(string(deschedulerv1.BinPacking)) {
+		return fmt.Errorf("enabling Descheduler BinPacking with Scheduler LowNodeUtilization will cause an eviction/scheduling hot loop")
 	}
 	return nil
 }
