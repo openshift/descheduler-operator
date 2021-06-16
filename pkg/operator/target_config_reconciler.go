@@ -236,6 +236,14 @@ func (c *TargetConfigReconciler) manageConfigMap(descheduler *deschedulerv1.Kube
 		mergo.Merge(policy, profile, mergo.WithAppendSlice)
 	}
 
+	// set PodLifetime if non-default
+	if descheduler.Spec.PodLifetime != nil {
+		seconds := uint(descheduler.Spec.PodLifetime.Seconds())
+		if strategy, ok := policy.Strategies["PodLifetime"]; ok {
+			strategy.Params.PodLifeTime.MaxPodLifeTimeSeconds = &seconds
+		}
+	}
+
 	// ignore PVC pods by default
 	ignorePVCPods := true
 	policy.IgnorePVCPods = &ignorePVCPods
