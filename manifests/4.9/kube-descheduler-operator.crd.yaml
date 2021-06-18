@@ -69,6 +69,7 @@ spec:
                   - TopologyAndDuplicates
                   - LifecycleAndUtilization
                   - DevPreviewLongLifecycle
+                  - SoftTopologyAndDuplicates
                   type: string
                 type: array
               unsupportedConfigOverrides:
